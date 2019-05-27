@@ -138,7 +138,7 @@ register_hotkey(hotkey)
 
 ;;; main
 ; usage
-MsgBox, ,Usage, Alt+Shift+F1~F12 to register.`nAlt+F1~F12 to trigger.`n`nAlt+Shift+Enter to show all.
+MsgBox, ,Usage, Alt+Shift+F1~F12 to register.`n`nAlt+F1~F12 to trigger.`n`nAlt+Shift+Enter to show all.`n`nAdd .ahk files at the same directory to extend optable actions.
 ; register registering hotkeys
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 Loop, 11

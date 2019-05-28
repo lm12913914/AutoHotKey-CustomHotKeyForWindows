@@ -89,9 +89,9 @@ register_hotkey(hotkey)
     WinGetTitle, title, A
     WinGet, hwnd, ID, A
     MsgBox, Register for window "%title%"
-	myhotkeys[hotkey] := new MyHotKey()
-	myhotkeys[hotkey].hwnd := hwnd
-	myhotkeys[hotkey].window_title := title
+	new_hotkey := new MyHotKey()
+	new_hotkey.hwnd := hwnd
+	new_hotkey.window_title := title
 	
 	selected_action := ""
 	current_gui := "register"
@@ -112,30 +112,36 @@ register_hotkey(hotkey)
     if (selected_action = "___cancel___")
     {
         MsgBox, register cancelled
+		return
     }
     else if (selected_action = "___mouse___")
     {
-        WinActivate, % myhotkeys[hotkey].hwnd
-        myhotkeys[hotkey].action["mouse"] := record_mouse_clicks(true)
-        MsgBox, register Completed, select "%selected_action%" as action
-        HotKey, %hotkey%, HotKeyDispatch
+        WinActivate, % new_hotkey.hwnd
+        new_hotkey.action["mouse"] := record_mouse_clicks(true)
     }
     else if (selected_action = "___clicks___")
     {
-        WinActivate, % myhotkeys[hotkey].hwnd
-        myhotkeys[hotkey].action["mouse"] := record_mouse_clicks(false)
+        WinActivate, % new_hotkey.hwnd
+        new_hotkey.action["mouse"] := record_mouse_clicks(false)
         MsgBox, register Completed, select "%selected_action%" as action
-        HotKey, %hotkey%, HotKeyDispatch
     }
     else
     {
-        myhotkeys[hotkey].action["ahk"] := selected_action
+        new_hotkey.action["ahk"] := selected_action
         MsgBox, register Completed, select "%selected_action%" as action
-		HotKey, %hotkey%, HotKeyDispatch
     }
+
+	myhotkeys[hotkey] := new_hotkey
+	HotKey, %hotkey%, HotKeyDispatch, On
 	return
 }
 
+unregister_hotkey(hotkey)
+{
+	global
+	myhotkeys.Delete(hotkey)
+	HotKey, %hotkey%, ,Off
+}
 ;;; main
 ; usage
 MsgBox, ,Usage, Alt+Shift+F1~F12 to register.`n`nAlt+F1~F12 to trigger.`n`nAlt+Shift+Enter to show all.`n`nAdd .ahk files at the same directory to extend optable actions.
@@ -149,6 +155,7 @@ Loop, 11
 return
 
 ;;; LABELS
+; ListView select event
 SelectScript:
     if (A_GuiEvent = "I")
     {
@@ -157,19 +164,29 @@ SelectScript:
     return
 
 ListViewOKButton:
-	LV_GetText(row, selected)
-	selected_action := row
-	Gui, Destroy
+	if (current_gui = "register")
+	{
+		LV_GetText(row, selected)
+		selected_action := row
+		Gui, Destroy
+	}
+	else if (current_gui = "show_hotkeys")
+	{
+		LV_GetText(row, selected, 1)
+		MsgBox, 4, , unregister '%row%' ?
+		IfMsgBox Yes
+		{
+			unregister_hotkey(row)
+			Gui, Destroy
+		}
+	}
 	return
 
 GuiEscape:
 GuiClose:
 	if (current_gui = "register")
 	{
-		if (selected_action = "")
-		{
-			selected_action := "___cancel___"
-		}
+		selected_action := "___cancel___"
 	}
 	Gui, Destroy
     return
@@ -182,6 +199,7 @@ HotKeyDispatch:
 	
 RegisterHotKey:
 	register_hotkey(SubStr(A_ThisHotKey, 2))
+	return
 
 RecordMouseClick:
     if (A_ThisHotKey = "Esc")
@@ -204,7 +222,7 @@ RecordMouseClick:
 
 ;;; remappings
 !+Enter::
-	current_gui := ""
+	current_gui := "show_hotkeys"
 	Gui, Add, ListView, w300 r10 gSelectScript AltSubmit, Hotkey|Action|Window
 	for index, hotkey in myhotkeys
 	{
@@ -221,8 +239,9 @@ RecordMouseClick:
 			break
 		}
 	}
+	LV_Modify(1, "Select Focus")
 
-	Gui, Add, Button, w300 Default gListViewOKButton, OK
+	Gui, Add, Button, w300 Default gListViewOKButton, Unregister
 	LV_ModifyCol() ; auto adjust column size
 	Gui, Show, , Registered actions
 	return

@@ -30,7 +30,6 @@ switch_and_runwait(hotkey)
         For index, pos in target_action.mouse
         {
             current_time := A_TickCount
-			Sleep, 50
 			MouseMove, % pos.x, % pos.y
 			Sleep, 50
             if (start_time != 0)
@@ -147,6 +146,7 @@ unregister_hotkey(hotkey)
 MsgBox, ,Usage, Alt+Shift+F1~F12 to register.`n`nAlt+F1~F12 to trigger.`n`nAlt+Shift+Enter to show all.`n`nAdd .ahk files at the same directory to extend optable actions.
 ; register registering hotkeys
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
+SetDefaultMouseSpeed, 4
 Loop, 11
 {
 	hotkey := "+!F" A_Index
